@@ -10,6 +10,22 @@ services:
     env_file:
       - .env
 
+  web:
+    build:
+      context: ./src/web
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    ports:
+      - 8000:8000
+    develop:
+      watch:
+        - action: sync
+          path: ./src/web
+          target: /project
+
   postgres:
     image: postgres:17
     env_file:

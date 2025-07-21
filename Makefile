@@ -1,6 +1,9 @@
 up:
 	docker compose up -d $(for) --build --force-recreate --remove-orphans
 
+watch:
+	docker compose watch web
+
 stop:
 	docker compose stop $(for)
 
