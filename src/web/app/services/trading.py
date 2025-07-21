@@ -6,24 +6,48 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.models.trading import TradingResult
-from app.schemas.trading import DateSchema
+from app.schemas.trading import DateSchema, TradingSchema
 
 
 class TradingService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_dates(self, days: int, offset: int) -> list[DateSchema]:
+    async def get_dates(self, limit: int, offset: int) -> list[DateSchema]:
         stmt = (
             select(TradingResult.date)
             .distinct()
             .order_by(desc(TradingResult.date))
-            .limit(days)
+            .limit(limit)
             .offset(offset)
         )
+
         result = await self.session.scalars(stmt)
         dates = result.all()
+
         return [DateSchema(date=date_) for date_ in dates]
+
+    async def get_last_tradings(
+        self,
+        limit: int,
+        offset: int,
+        oil_id: str | None,
+        delivery_type_id: str | None,
+        delivery_basis_id: str | None,
+    ) -> list[TradingSchema]:
+        stmt = select(TradingResult)
+        if oil_id:
+            stmt = stmt.where(TradingResult.oil_id == oil_id)
+        if delivery_type_id:
+            stmt = stmt.where(TradingResult.delivery_type_id == delivery_type_id)
+        if delivery_basis_id:
+            stmt = stmt.where(TradingResult.delivery_basis_id == delivery_basis_id)
+        stmt = stmt.limit(limit).offset(offset)
+
+        result = await self.session.scalars(stmt)
+        tradings = result.all()
+
+        return [TradingSchema.model_validate(trading) for trading in tradings]
 
 
 def get_trading_service(
