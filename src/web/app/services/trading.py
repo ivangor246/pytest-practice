@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Annotated
 
 from fastapi import Depends
@@ -27,7 +28,7 @@ class TradingService:
 
         return [DateSchema(date=date_) for date_ in dates]
 
-    async def get_last_tradings(
+    async def get_last_trades(
         self,
         limit: int,
         offset: int,
@@ -42,12 +43,40 @@ class TradingService:
             stmt = stmt.where(TradingResult.delivery_type_id == delivery_type_id)
         if delivery_basis_id:
             stmt = stmt.where(TradingResult.delivery_basis_id == delivery_basis_id)
-        stmt = stmt.limit(limit).offset(offset)
+        stmt = stmt.order_by(desc(TradingResult.date)).limit(limit).offset(offset)
 
         result = await self.session.scalars(stmt)
-        tradings = result.all()
+        trades = result.all()
 
-        return [TradingSchema.model_validate(trading) for trading in tradings]
+        return [TradingSchema.model_validate(trading) for trading in trades]
+
+    async def get_range_trades(
+        self,
+        limit: int,
+        offset: int,
+        oil_id: str | None,
+        delivery_type_id: str | None,
+        delivery_basis_id: str | None,
+        start_date: date | None,
+        end_date: date | None,
+    ) -> list[TradingSchema]:
+        stmt = select(TradingResult)
+        if oil_id:
+            stmt = stmt.where(TradingResult.oil_id == oil_id)
+        if delivery_type_id:
+            stmt = stmt.where(TradingResult.delivery_type_id == delivery_type_id)
+        if delivery_basis_id:
+            stmt = stmt.where(TradingResult.delivery_basis_id == delivery_basis_id)
+        if start_date:
+            stmt = stmt.where(TradingResult.date >= start_date)
+        if end_date:
+            stmt = stmt.where(TradingResult.date <= end_date)
+        stmt = stmt.order_by(desc(TradingResult.date)).limit(limit).offset(offset)
+
+        result = await self.session.scalars(stmt)
+        trades = result.all()
+
+        return [TradingSchema.model_validate(trading) for trading in trades]
 
 
 def get_trading_service(
