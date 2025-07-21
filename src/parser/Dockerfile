@@ -9,4 +9,4 @@ RUN pip install --upgrade pip --no-cache-dir \
 
 COPY . .
 
-ENTRYPOINT [ "python", "main.py" ]
+ENTRYPOINT [ "python", "app/main.py" ]
