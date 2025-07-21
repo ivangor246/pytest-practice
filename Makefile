@@ -1,3 +1,7 @@
+up-db:
+	docker compose up -d postgres --build --force-recreate --remove-orphans \
+	&& docker compose up -d redis --build --force-recreate --remove-orphans
+
 up:
 	docker compose up -d $(for) --build --force-recreate --remove-orphans
 

@@ -8,12 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.models.trading import TradingResult
 from app.schemas.trading import DateSchema, TradingSchema
+from app.utils.cache import async_cache
 
 
 class TradingService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    @async_cache()
     async def get_dates(self, limit: int, offset: int) -> list[DateSchema]:
         stmt = (
             select(TradingResult.date)
@@ -28,6 +30,7 @@ class TradingService:
 
         return [DateSchema(date=date_) for date_ in dates]
 
+    @async_cache()
     async def get_last_trades(
         self,
         limit: int,
@@ -50,6 +53,7 @@ class TradingService:
 
         return [TradingSchema.model_validate(trading) for trading in trades]
 
+    @async_cache()
     async def get_range_trades(
         self,
         limit: int,
