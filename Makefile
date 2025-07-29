@@ -22,9 +22,12 @@ clear:
 	docker compose -f docker-compose.yml down -v --rmi all --remove-orphans
 
 
-# tests
-test:
-	docker compose -f docker-compose.test.yml run --build test_web
+# test
+test-build:
+	docker compose -f docker-compose.test.yml build
+
+test-run:
+	docker compose -f docker-compose.test.yml run --rm test_web
 
 test-log:
 	docker compose -f docker-compose.test.yml logs $(for)
