@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 import pytest_asyncio
 from app.models.trading import TradingResult
+from app.schemas.trading import TradingSchema
 from app.services.trading import TradingService
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -49,3 +50,21 @@ class TestTradingService:
         db_result_dates = db_result.all()
 
         assert service_result_dates == db_result_dates
+
+    async def test_get_last_trades(self, session: AsyncSession, fill_trading_data):
+        service = TradingService(session)
+
+        service_trades = await service.get_last_trades(
+            limit=10,
+            offset=0,
+            oil_id=None,
+            delivery_type_id=None,
+            delivery_basis_id=None,
+        )
+
+        stmt = select(TradingResult).order_by(desc(TradingResult.date)).limit(10).offset(0)
+        db_result = await session.scalars(stmt)
+        db_trades = db_result.all()
+        db_trade_schemas = [TradingSchema.model_validate(trading) for trading in db_trades]
+
+        assert service_trades == db_trade_schemas
