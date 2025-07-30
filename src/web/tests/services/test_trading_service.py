@@ -68,3 +68,32 @@ class TestTradingService:
         db_trade_schemas = [TradingSchema.model_validate(trading) for trading in db_trades]
 
         assert service_trades == db_trade_schemas
+
+    async def test_get_range_trades(self, session: AsyncSession, fill_trading_data):
+        service = TradingService(session)
+
+        start_date = date(2025, 1, 1)
+        end_date = date(2025, 1, 5)
+
+        service_trades = await service.get_range_trades(
+            limit=10,
+            offset=0,
+            oil_id=None,
+            delivery_type_id=None,
+            delivery_basis_id=None,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        stmt = (
+            select(TradingResult)
+            .where(TradingResult.date >= start_date, TradingResult.date <= end_date)
+            .order_by(desc(TradingResult.date))
+            .limit(10)
+            .offset(0)
+        )
+        db_result = await session.scalars(stmt)
+        db_trades = db_result.all()
+        db_trade_schemas = [TradingSchema.model_validate(trading) for trading in db_trades]
+
+        assert service_trades == db_trade_schemas
